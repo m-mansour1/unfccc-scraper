@@ -227,3 +227,93 @@ for option_country_A in options_countries_A:
                     Page_title = re.sub(r'[^\w\s-]', '', Page_title.lower())
                     Page_title = re.sub(r'[-\s]+', '-', Page_title).strip('-_')
                     df.to_csv(f'{base_path}\\{Page_title}.csv',index = False)   
+#fifth page
+driver.get('https://di.unfccc.int/ghg_profile_annex1')
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div/div/img')))
+trs = driver.find_element(By.CLASS_NAME,'dataTable').find_elements(By.TAG_NAME,'tbody')
+rows = [each.find_elements(By.XPATH, "tr[@role = 'row']") for each in trs]
+for row in rows:
+    for each in row:
+        tds = each.find_elements(By.TAG_NAME,'td')
+        # get topic
+        Page_title = tds[0].text
+        #get pdf
+        download_button = tds[1].find_element(By.TAG_NAME,'a')
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((download_button)))
+        webdriver.ActionChains(driver).move_to_element(download_button).click(download_button).perform()
+        time.sleep(1)
+        def latest_download_file():
+            path = base_path
+            os.chdir(path)
+            files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
+            newest = files[-1]
+
+            return newest
+
+        fileends = "crdownload"
+        while "crdownload" == fileends:
+            time.sleep(5) 
+            newest_file = latest_download_file()
+            if "crdownload" in newest_file:
+                fileends = "crdownload"
+                # time.sleep(5)
+            else:
+                fileends = "None"
+        latest_download_file()
+        file = max([base_path + "\\" + f for f in os.listdir(base_path)],key=os.path.getctime)
+        xls = pd.ExcelFile(file)
+        sheets = xls.sheet_names
+        data_bySector = pd.read_excel(file,sheets[0])
+        try:
+            ind = data_bySector[data_bySector.columns[0]].index[data_bySector[data_bySector.columns[0]] == 'Average annual change, in percent'].tolist()[0]
+            data_bySector = data_bySector[:ind]
+        except:
+            try:
+                ind = data_bySector[data_bySector.columns[0]].index[data_bySector[data_bySector.columns[0]] == 'Average annual changes, in percent'].tolist()[0] 
+                data_bySector = data_bySector[:ind]
+            except:
+                pass
+        
+        title_sector = Page_title + ' data by Sector ' + data_bySector.columns[0]
+        title_sector = title_sector.replace('~$','').replace('~','').replace(':','').replace('/','')
+        ind_1 = data_bySector[data_bySector.columns[0]].index[data_bySector[data_bySector.columns[0]] == 'Summary Total'].tolist()[0]
+        ind_2 = data_bySector[data_bySector.columns[0]].index[data_bySector[data_bySector.columns[0]] == 'Breakdown by sub-sectors'].tolist()[0]
+        df_1 = data_bySector[ind_1+1:ind_2-1]
+        title_1 = data_bySector.iloc[ind_1,0] + ' ' + title_sector
+        title_1 = title_1.replace('~$','').replace('~','').replace(':','').replace('/','')
+        df_1.to_excel(f'{base_path}\\{title_1}.xlsx',index=False)
+        df_2 = data_bySector[ind_2+1:]
+        title_2 = data_bySector.iloc[ind_2,0] + ' ' + title_sector
+        title_2 = title_2.replace('~$','').replace('~','').replace(':','').replace('/','')
+        df_2.to_excel(f'{base_path}\\{title_2}.xlsx',index=False)
+        data_byGas = pd.read_excel(file,sheets[1])
+        try:
+            ind = data_byGas[data_byGas.columns[0]].index[data_byGas[data_byGas.columns[0]] == 'Average annual change, in percent'].tolist()[0]
+            data_byGas = data_byGas[:ind]
+        except:
+            try:
+                ind = data_byGas[data_byGas.columns[0]].index[data_byGas[data_byGas.columns[0]] == 'Average annual changes, in percent'].tolist()[0]
+                data_byGas = data_byGas[:ind]
+            except:
+                pass
+        ind_1 = data_byGas[data_byGas.columns[0]].index[data_byGas[data_byGas.columns[0]] == 'CO₂'].tolist()[0]
+        ind_2 = data_byGas[data_byGas.columns[0]].index[data_byGas[data_byGas.columns[0]] == 'CO₂'].tolist()[1]
+        title_gas = Page_title + ' data by Gas ' + data_byGas.columns[0]
+        title_gas = title_gas.replace('~$','').replace('~','').replace(':','').replace('/','')
+        data_byGas[data_byGas.columns[0]][:ind_2-2] = data_byGas.iloc[ind_1-1,0] + '_' + data_byGas[data_byGas.columns[0]][:ind_2-2] .astype(str)
+        data_byGas[data_byGas.columns[0]][ind_2:] = data_byGas.iloc[ind_2-1,0] + '_' + data_byGas[data_byGas.columns[0]][ind_2:].astype(str)
+        data_byGas = data_byGas.drop(index=[ind_1-1,ind_2-2,ind_2-1])
+        data_byGas.to_excel(f'{base_path}\\{title_gas}.xlsx',index=False)
+        try:
+            summary_data = pd.read_excel(file,sheets[2])
+            ind_3 = summary_data[summary_data.columns[3]].index[summary_data[summary_data.columns[3]] == 'Average annual growth rates, in percent per year'].tolist()[0]
+            title_3_s = Page_title + ' ' + summary_data.iloc[ind_3,3]
+            title_3_s = title_3_s.replace('~$','').replace('~','').replace(':','').replace('/','')
+            columns_3 = summary_data.iloc[ind_3+1,]
+            columns_3[0] = 'category'
+            df_3 = summary_data.iloc[ind_3+2:ind_3+8]
+            df_3.columns = columns_3
+            df_3 = df_3.dropna(how='all', axis='columns')
+            df_3.to_excel(f'{base_path}\\{title_3_s}.xlsx',index=False)
+        except:
+            pass
