@@ -411,4 +411,39 @@ for row in rows:
             df_3.to_excel(f'{base_path}\\{title_3_s}.xlsx',index=False)
         except:
             pass
-        
+
+#sixth page
+driver.get('https://di.unfccc.int/global_map')
+iframeURL = driver.find_element(By.CLASS_NAME, 'global-map').get_attribute("src")
+
+driver.get('https://di.unfccc.int/'+ iframeURL)
+options_sector = driver.find_element(By.ID, 'sector').find_elements(By.TAG_NAME,'option')
+country1 =[]
+value1 = []
+country2 =[]
+value2 = []
+country3 =[]
+value3 = []
+for option_sector in options_sector:
+    option_sector.click()
+    options_gas = driver.find_element(By.ID, 'gas').find_elements(By.TAG_NAME,'option')
+    for option_gas in options_gas:
+        option_gas.click()
+        options_year = driver.find_element(By.ID, 'year').find_elements(By.TAG_NAME,'option')
+        for option_year in options_year:
+            option_year.click()
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'country_list_table')))
+            table = driver.find_element(By.ID, 'country_list_table').find_elements(By.TAG_NAME,'tr')
+            for row in table:
+                country1.append(row.find_elements(By.TAG_NAME,'td')[1].text)
+                value1.append(row.find_elements(By.TAG_NAME,'td')[2].text)
+                country2.append(row.find_elements(By.TAG_NAME,'td')[5].text)
+                value2.append(row.find_elements(By.TAG_NAME,'td')[6].text)
+                country3.append(row.find_elements(By.TAG_NAME,'td')[9].text)
+                value3.append(row.find_elements(By.TAG_NAME,'td')[10].text)
+                
+                countryNames = country1 + country2 + country3
+                values = value1 + value2 + value3
+                df = pd.DataFrame({'Country Name':countryNames,'Value':values})
+                df.to_excel(f'{base_path}\\{option_sector.text, option_gas.text, option_year.text}.xlsx',index=False)
+            
