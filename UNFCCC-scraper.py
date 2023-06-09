@@ -51,7 +51,7 @@ for option in select_element.find_elements(By.TAG_NAME,'option'):
         l.append(cells_text)
     df = pd.DataFrame(l,columns=header)
     title = title.replace('\\', '').replace('\\\\', '').replace('/',', ')
-    df.to_csv(f'{base_path}\\{title}.xlsx',index = False)
+    df.to_csv(f'{base_path}\\{title}.csv',index = False)
 
 #second page
 driver.get('https://di.unfccc.int/detailed_data_by_party')
@@ -97,7 +97,7 @@ for option_country in options_countries:
                     Page_title = Page_title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
                     Page_title = re.sub(r'[^\w\s-]', '', Page_title.lower())
                     Page_title = re.sub(r'[-\s]+', '-', Page_title).strip('-_')
-                    df.to_csv(f'{base_path}\\{Page_title}.xlsx',index = False)
+                    df.to_csv(f'{base_path}\\{Page_title}.csv',index = False)
 
 #third page
 driver.get('https://di.unfccc.int/comparison_by_category')
@@ -169,7 +169,7 @@ for option_country_A in options_countries_A:
                             Page_title = Page_title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
                             Page_title = re.sub(r'[^\w\s-]', '', Page_title.lower())
                             Page_title = re.sub(r'[-\s]+', '-', Page_title).strip('-_')
-                            df.to_csv(f'{base_path}\\{Page_title}.xlsx',index = False)  
+                            df.to_csv(f'{base_path}\\{Page_title}.csv',index = False)  
 
 #fourth page
 driver.get('https://di.unfccc.int/comparison_by_gas')
@@ -226,4 +226,4 @@ for option_country_A in options_countries_A:
                     Page_title = Page_title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
                     Page_title = re.sub(r'[^\w\s-]', '', Page_title.lower())
                     Page_title = re.sub(r'[-\s]+', '-', Page_title).strip('-_')
-                    df.to_csv(f'{base_path}\\{Page_title}.xlsx',index = False)   
+                    df.to_csv(f'{base_path}\\{Page_title}.csv',index = False)   
