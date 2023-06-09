@@ -445,5 +445,5 @@ for option_sector in options_sector:
                 countryNames = country1 + country2 + country3
                 values = value1 + value2 + value3
                 df = pd.DataFrame({'Country Name':countryNames,'Value':values})
-                df.to_excel(f'{base_path}\\{option_sector.text, option_gas.text, option_year.text}.xlsx',index=False)
+                df.to_excel(f'{base_path}\\{option_sector.text}_{option_gas.text}_{option_year.text}.xlsx',index=False)
             
