@@ -586,3 +586,95 @@ for category_option in category_options:
                 show_button = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/fieldset/div/div[1]/button[2]')
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable((show_button)))
                 webdriver.ActionChains(driver).move_to_element(show_button).click(show_button).perform()
+
+#ninth page
+driver.get('https://di.unfccc.int/flex_cad')
+WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div/div/img')))
+
+partiesFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[0]
+driver.execute_script("arguments[0].style.display = 'block';", partiesFilter)
+partiesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click()
+
+yearsFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[2]
+driver.execute_script("arguments[0].style.display = 'block';", yearsFilter)
+yearsFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click()
+
+categoryFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[3]
+driver.execute_script("arguments[0].style.display = 'block';", categoryFilter)
+category_options = driver.find_element(By.ID,'listboxdiv_categories').find_elements(By.TAG_NAME,'p')
+
+
+for category_option in category_options:
+    if 'not-selectable' in category_option.get_attribute('class'):
+        continue
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((categoryFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1])))
+    try:
+        categoryFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1].click() # deselect all
+    except:
+        driver.execute_script("arguments[0].click()", categoryFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1].click())
+    category_option.click()
+    classificationFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[4]
+    driver.execute_script("arguments[0].style.display = 'block';", classificationFilter)
+    classifications_options = driver.find_element(By.ID,'listboxdiv_classifications').find_elements(By.TAG_NAME,'p')
+    for classification_option in classifications_options:
+        if 'not-selectable' in classification_option.get_attribute('class'):
+            continue
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((classificationFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0])))
+        classificationFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click() # select all
+        valuesFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[5]
+        driver.execute_script("arguments[0].style.display = 'block';", valuesFilter)
+        values_options = driver.find_element(By.ID,'listboxdiv_measures').find_elements(By.TAG_NAME,'p')
+        for value_option in values_options:
+            if 'not-selectable' in value_option.get_attribute('class'):
+                continue
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((valuesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0])))
+            valuesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click() # select all
+            gasesFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[6]
+            driver.execute_script("arguments[0].style.display = 'block';", gasesFilter)
+            gases_options = driver.find_element(By.ID,'listboxdiv_gases').find_elements(By.TAG_NAME,'p')
+            for gas_option in gases_options:
+                if 'not-selectable' in gas_option.get_attribute('class'):
+                    continue
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((gasesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0])))
+                gasesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click() # select all
+                time.sleep(2)
+                go_button = driver.find_element(By.CLASS_NAME,'button-group').find_elements(By.TAG_NAME,'button')[0]
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((go_button)))
+                webdriver.ActionChains(driver).move_to_element(go_button).click(go_button).perform()
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'dwhPivot')))
+                soup = BeautifulSoup(driver.page_source, 'html.parser')
+                table = soup.find(id='dwhPivot')
+                title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div/div[2]').text.split('Category:')[1].split('| Classification')[0]
+                title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
+                title = re.sub(r'[^\w\s-]', '', title.lower())
+                title = re.sub(r'[-\s]+', '-', title).strip('-_')
+
+                result = driver.find_element(By.ID,'divToPrint')
+                ta = result.find_element(By.CLASS_NAME,'pvtUi')
+                ro = ta.find_elements(By.TAG_NAME,'tr')
+                part_table = ro[2].find_element(By.CLASS_NAME,'pvtOutput')
+                table = part_table.find_element(By.ID,'tableGrid').find_element(By.ID,'dwhPivot')
+                cells_col = table.find_element(By.TAG_NAME,'tr').find_elements(By.TAG_NAME,'th')
+                cells_unit = table.find_elements(By.TAG_NAME,'tr')[1].find_elements(By.TAG_NAME,'th')
+                column = []
+                for cell_c in cells_col[2:]:
+                    column.append(cell_c.text)
+                unt = cells_unit[1].text
+                column.insert(0, 'Party')
+                body_table = table.find_element(By.TAG_NAME,'tbody')
+                rows = body_table.find_elements(By.TAG_NAME,'tr')
+                l = []
+                for tr in rows:
+                    cells = tr.find_elements(By.CLASS_NAME,'pvtVal')
+                    col_0 = tr.find_element(By.CLASS_NAME,'pvtRowLabel')
+                    cells_text = [col_0.text] + [cell.text for cell in cells]
+                    l.append(cells_text)
+                unit = [unt] * len(rows)
+                df = pd.DataFrame(l,columns=column)
+                df.insert(1,'Unit',unit)
+                df.to_excel(f'{base_path}\\{title}.xlsx',index = False)
+            
+                # show the filter block
+                show_button = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/fieldset/div/div[1]/button[2]')
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((show_button)))
+                webdriver.ActionChains(driver).move_to_element(show_button).click(show_button).perform()
