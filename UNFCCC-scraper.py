@@ -447,7 +447,7 @@ for option_sector in options_sector:
                 df = pd.DataFrame({'Country Name':countryNames,'Value':values})
                 df.to_excel(f'{base_path}\\{option_sector.text}_{option_gas.text}_{option_year.text}.xlsx',index=False)
 
-#seventh page
+#seventh page part 1
 driver.get('https://di.unfccc.int/flex_annex1')
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div/div/img')))
 
@@ -498,30 +498,89 @@ for category_option in category_options:
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable((go_button)))
                 webdriver.ActionChains(driver).move_to_element(go_button).click(go_button).perform()
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'dwhPivot')))
-                # get the table
-                thead = driver.find_element(By.ID, 'dwhPivot').find_element(By.TAG_NAME,'thead').find_elements(By.TAG_NAME,'tr')
-                tbody = driver.find_element(By.ID, 'dwhPivot').find_element(By.TAG_NAME,'tbody').find_elements(By.TAG_NAME,'tr')
-                # get the table headers
-                headers = [] # years
-                for th in thead[0].find_elements(By.TAG_NAME,'th')[2:]:
-                    headers.append(th.text)
-                units = [] # units
-                for th in thead[1].find_elements(By.TAG_NAME,'th')[1:]:
-                    headers.append(th.text)
-
-                # get the table data
-                l = []
-                for tr in tbody:
-                    cells = tr.find_elements(By.TAG_NAME,'td')
-                    cells_text = [cell.text for cell in cells]
-                    l.append(cells_text)
-                    
-                df = pd.DataFrame(l,columns=headers)
+                soup = BeautifulSoup(driver.page_source, 'html.parser')
+                table = soup.find(id='dwhPivot')
                 title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div/div[2]').text
                 title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
-                df.to_csv(f'{base_path}\\{title}.csv',index = False)
+                title = re.sub(r'[^\w\s-]', '', title.lower())
+                title = re.sub(r'[-\s]+', '-', title).strip('-_')
+                with open(f'{base_path}\\{title}.csv', 'w', newline='',  encoding="utf-8") as csv_file:
+                    writer = csv.writer(csv_file)
+                    for row in table.find_all('tr'):
+                        csv_row = []
+                        for cell in row.find_all(['th', 'td']):
+                            csv_row.append(cell.text.strip())
+                        writer.writerow(csv_row)
 
-                    
+                # show the filter block
+                show_button = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/fieldset/div/div[1]/button[2]')
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((show_button)))
+                webdriver.ActionChains(driver).move_to_element(show_button).click(show_button).perform()
+
+#seventh page part 2
+driver.get('https://di.unfccc.int/flex_non_annex1')
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div/div/img')))
+
+partiesFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[0]
+driver.execute_script("arguments[0].style.display = 'block';", partiesFilter)
+partiesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click()
+
+yearsFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[1]
+driver.execute_script("arguments[0].style.display = 'block';", yearsFilter)
+yearsFilter.find_elements(By.CLASS_NAME,'ddlbButton')[0].click()
+
+categoryFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[2]
+driver.execute_script("arguments[0].style.display = 'block';", categoryFilter)
+category_options = driver.find_element(By.ID,'listboxdiv_categories').find_elements(By.TAG_NAME,'p')
+
+
+for category_option in category_options:
+    if 'not-selectable' in category_option.get_attribute('class'):
+        continue
+    categoryFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1].click() # deselect all
+    category_option.click()
+    classificationFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[3]
+    driver.execute_script("arguments[0].style.display = 'block';", classificationFilter)
+    classifications_options = driver.find_element(By.ID,'listboxdiv_classifications').find_elements(By.TAG_NAME,'p')
+    for classification_option in classifications_options:
+        if 'not-selectable' in classification_option.get_attribute('class'):
+            continue
+        classificationFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1].click() # deselect all
+        classification_option.click()
+        valuesFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[4]
+        driver.execute_script("arguments[0].style.display = 'block';", valuesFilter)
+        values_options = driver.find_element(By.ID,'listboxdiv_measures').find_elements(By.TAG_NAME,'p')
+        for value_option in values_options:
+            if 'not-selectable' in value_option.get_attribute('class'):
+                continue
+            valuesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1].click() # deselect all
+            value_option.click()
+            gasesFilter = driver.find_elements(By.CLASS_NAME, "ddlbFilterBox")[5]
+            driver.execute_script("arguments[0].style.display = 'block';", gasesFilter)
+            gases_options = driver.find_element(By.ID,'listboxdiv_gases').find_elements(By.TAG_NAME,'p')
+            for gas_option in gases_options:
+                if 'not-selectable' in gas_option.get_attribute('class'):
+                    continue
+                gasesFilter.find_elements(By.CLASS_NAME,'ddlbButton')[1].click() # deselect all
+                gas_option.click()
+                time.sleep(2)
+                go_button = driver.find_element(By.CLASS_NAME,'button-group').find_elements(By.TAG_NAME,'button')[0]
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((go_button)))
+                webdriver.ActionChains(driver).move_to_element(go_button).click(go_button).perform()
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'dwhPivot')))
+                soup = BeautifulSoup(driver.page_source, 'html.parser')
+                table = soup.find(id='dwhPivot')
+                title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div/div[2]').text
+                title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
+                title = re.sub(r'[^\w\s-]', '', title.lower())
+                title = re.sub(r'[-\s]+', '-', title).strip('-_')
+                with open(f'{base_path}\\{title}.csv', 'w', newline='',  encoding="utf-8") as csv_file:
+                    writer = csv.writer(csv_file)
+                    for row in table.find_all('tr'):
+                        csv_row = []
+                        for cell in row.find_all(['th', 'td']):
+                            csv_row.append(cell.text.strip())
+                        writer.writerow(csv_row)
 
                 # show the filter block
                 show_button = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/fieldset/div/div[1]/button[2]')
