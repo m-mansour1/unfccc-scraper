@@ -94,6 +94,7 @@ def executeFilter(NumParametersRadio, DenParametersRadio):
                             driver.execute_script("arguments[0].click()", option5)
                             driver.execute_script("arguments[0].style.display = 'block';", options_Filter1[4])
                             time.sleep(1)
+
                     #second filter
                     options_Filter2 = filters[2].find_elements(By.CLASS_NAME,'ddlbFilterBox')
                     options6 = options_Filter2[0].find_elements(By.TAG_NAME,'p')
@@ -148,8 +149,9 @@ def executeFilter(NumParametersRadio, DenParametersRadio):
                                             
                                             #table = driver.find_element(By.CLASS_NAME,'dataTable')
                                             #data = driver.find_element(By.ID,'DataTables_Table_0').find_element(By.TAG_NAME,'tbody')
-                                            title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div[1]/p/strong').text
-                                            title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
+                                            title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div[1]/table/tbody/tr[2]/td[2]').text +' '+ driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div/div[4]/div[1]/table/tbody/tr[3]/td[2]').text
+                                            title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','').replace('Category: ', '').replace('Classification:', '')
+                                            title = title.replace('Unit:', '').replace('Measure:', '').replace('Gas:','')
                                             soup = BeautifulSoup(driver.page_source, "html.parser")
 
                                             table = soup.find(class_='dataTable')
@@ -165,8 +167,9 @@ def executeFilter(NumParametersRadio, DenParametersRadio):
 
                                             df.to_excel(f'{base_path}\\{title}.xlsx', index=False)
                                     if not DenParametersRadio:
-                                        title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div[1]/p/strong').text
-                                        title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','')
+                                        title = driver.find_element(By.XPATH,'/html/body/div/div/div[2]/div/div/div[4]/div[1]/table/tbody/tr[2]/td[2]').text +' '+ driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div/div[4]/div[1]/table/tbody/tr[3]/td[2]').text
+                                        title = title.replace('\\', '').replace('\\\\', '').replace('/',', ').replace('Query results for — ','').replace('Category: ', '').replace('Classification:', '')
+                                        title = title.replace('Unit:', '').replace('Measure:', '').replace('Gas:','').replace('(Numerator)', '').replace('(Denominator)', '').strip()
                                         soup = BeautifulSoup(driver.page_source, "html.parser")
 
                                         table = soup.find(class_='dataTable')
@@ -233,4 +236,3 @@ def execute():
     time.sleep(2)
     
 execute()
-
