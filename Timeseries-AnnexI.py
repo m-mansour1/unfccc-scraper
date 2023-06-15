@@ -22,7 +22,7 @@ from RequestInferSchemaToJsonAPI.main import TriggerInferShemaToJsonAPI
 chrome_options = webdriver.ChromeOptions()
 
 # download path
-base_path = "\\\\10.30.31.77\data_collection_dump\RawData\Test UNFCCC\Time Series" 
+base_path = r"\\10.30.31.77\data_collection_dump/RawData/Test UNFCCC/Time Series" 
 prefs = {'download.default_directory' : base_path}
 chrome_options.add_experimental_option('prefs', prefs)
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
